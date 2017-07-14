@@ -1,0 +1,4 @@
+hlds:
+  build: docker/hlds
+  ports:
+    - 27015/udp:27015
