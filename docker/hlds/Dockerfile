@@ -13,4 +13,5 @@ RUN ./steamcmd.sh +login anonymous +force_install_dir /opt/hlds +app_update 10 v
 RUN ./steamcmd.sh +login anonymous +force_install_dir /opt/hlds +app_update 90 validate +quit
 
 WORKDIR /opt/hlds
+RUN echo "10" > steam_appid.txt
 CMD ["./hlds_run", "-game", "cstrike", "+maxplayers 4", "+map de_dust2", "-nomaster", "+rcon_password", "12345"]

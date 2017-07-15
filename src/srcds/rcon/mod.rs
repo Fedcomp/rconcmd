@@ -15,9 +15,9 @@ pub enum PacketType {
 }
 
 pub struct Packet {
-    id: i32,
-    net_type: PacketType,
-    body: CString
+    pub id: i32,
+    pub net_type: PacketType,
+    pub body: CString
 }
 
 impl Packet {
@@ -27,7 +27,7 @@ impl Packet {
         (mem::size_of::<i32>() + mem::size_of::<i32>() + self.body.as_bytes_with_nul().len() + 1) as i32
     }
 
-    fn serialize(&self) -> Vec<u8> {
+    pub fn serialize(&self) -> Vec<u8> {
         let mut buff = vec![];
 
         buff.write_i32::<LittleEndian>(self.size()).unwrap();
@@ -55,25 +55,25 @@ mod tests {
 
         assert_eq!(packet.size(), 10);
 
-        let mut new_body = CString::new("body").unwrap();
-        packet.body = new_body;
+        packet.body = CString::new("body").unwrap();
         assert_eq!(packet.size(), 14);
+        assert_eq!(packet.size(), (packet.serialize().len() - 4) as i32);
     }
 
     #[test]
     fn test_serialize() {
-        let mut packet = Packet {
+        let packet = Packet {
             id: 0,
             net_type: PacketType::SERVERDATA_AUTH,
             body: CString::new("passwrd").unwrap()
         };
 
         const EXPECTED_DATA: [u8; 21] = [
-            0x11, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x03, 0x00, 0x00, 0x00,
-            0x70, 0x61, 0x73, 0x73, 0x77, 0x72, 0x64, 0x00,
-            0x00
+            0x11, 0x00, 0x00, 0x00, // Size
+            0x00, 0x00, 0x00, 0x00, // id
+            0x03, 0x00, 0x00, 0x00, // type
+            0x70, 0x61, 0x73, 0x73, 0x77, 0x72, 0x64, 0x00, // command string (passwd in this case)
+            0x00 // packet temination string
         ];
 
         assert_eq!(packet.serialize()[..], EXPECTED_DATA);
