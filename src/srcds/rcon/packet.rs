@@ -1,8 +1,11 @@
 use std::ffi::CString;
 use std::mem;
+use std::io::Read;
+use std::io::Error;
+use std::io::Cursor;
 
 extern crate byteorder;
-use self::byteorder::{LittleEndian, WriteBytesExt};
+use self::byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 
 use super::PacketType;
 
@@ -31,11 +34,39 @@ impl Packet {
 
         buff
     }
+
+    pub fn read_from<S>(stream: &mut S) -> Result<Packet, Error> where S: Read {
+        let packet_size = stream.read_i32::<LittleEndian>().unwrap();
+        let mut packet: Vec<u8> = vec![0; packet_size as usize];
+        let _ = stream.read_exact(&mut packet);
+        let mut stream = Cursor::new(packet);
+
+        let id = stream.read_i32::<LittleEndian>().unwrap();
+        let net_type = stream.read_i32::<LittleEndian>().unwrap();
+        let net_type = PacketType::from_value(net_type, false);
+        let mut body = vec![0; (packet_size as usize) - 4 - 4 - 2];
+        let _ = stream.read_exact(&mut body);
+        let body = CString::new(body).unwrap();
+
+        Ok(Packet {
+            id: id,
+            net_type: net_type,
+            body: body
+        })
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const OUTGOING_AUTH_PACKET: [u8; 21] = [
+        0x11, 0x00, 0x00, 0x00, // Size
+        0x00, 0x00, 0x00, 0x00, // id
+        0x03, 0x00, 0x00, 0x00, // type
+        0x70, 0x61, 0x73, 0x73, 0x77, 0x72, 0x64, 0x00, // command string (passwd in this case)
+        0x00 // packet temination string
+    ];
 
     #[test]
     fn test_size() {
@@ -60,14 +91,16 @@ mod tests {
             body: CString::new("passwrd").unwrap()
         };
 
-        const EXPECTED_DATA: [u8; 21] = [
-            0x11, 0x00, 0x00, 0x00, // Size
-            0x00, 0x00, 0x00, 0x00, // id
-            0x03, 0x00, 0x00, 0x00, // type
-            0x70, 0x61, 0x73, 0x73, 0x77, 0x72, 0x64, 0x00, // command string (passwd in this case)
-            0x00 // packet temination string
-        ];
+        assert_eq!(packet.serialize()[..], OUTGOING_AUTH_PACKET);
+    }
 
-        assert_eq!(packet.serialize()[..], EXPECTED_DATA);
+    #[test]
+    fn test_read_from() {
+        let mut stream = Cursor::new(OUTGOING_AUTH_PACKET);
+        let packet = Packet::read_from(&mut stream).unwrap();
+
+        assert_eq!(packet.id, 0);
+        assert_eq!(packet.net_type, PacketType::SERVERDATA_AUTH);
+        assert_eq!(packet.body, CString::new("passwrd").unwrap());
     }
 }
