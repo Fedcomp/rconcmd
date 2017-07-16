@@ -24,7 +24,7 @@ impl Packet {
 
         buff.write_i32::<LittleEndian>(self.size()).unwrap();
         buff.write_i32::<LittleEndian>(self.id).unwrap();
-        buff.write_i32::<LittleEndian>(self.net_type as i32).unwrap();
+        buff.write_i32::<LittleEndian>(self.net_type.value()).unwrap();
         buff.extend(self.body.as_bytes());
         buff.push(0);
         buff.push(0);
