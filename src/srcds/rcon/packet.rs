@@ -9,6 +9,7 @@ use self::byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 
 use super::PacketType;
 
+#[derive(Debug)]
 pub struct Packet {
     pub id: i32,
     pub net_type: PacketType,

@@ -14,18 +14,16 @@ fn main() {
     };
 
     let _ = stream.write(&packet.serialize()).expect("can't send auth");
-    let mut buff: Vec<u8> = vec![0; 4 + 4 + 4 + 2];
-    let _ = stream.read(&mut buff).expect("can't read anything"); // ignore here too
-    println!("{:?}", buff);
+    let response_packet = Packet::read_from(&mut stream).unwrap();
 
-    let packet = Packet {
-        id: 1,
+    // if id == 255 == failed
+    let command_packet = Packet {
+        id: 0,
         net_type: PacketType::SERVERDATA_EXECCOMMAND,
-        body: CString::new("status").unwrap()
+        body: CString::new("echo status").unwrap()
     };
-    let _ = stream.write(&packet.serialize()).expect("can't send auth");
+    let _ = stream.write(&command_packet.serialize()).expect("can't send command");
 
-    let mut buff: Vec<u8> = vec![0; 128];
-    let _ = stream.read(&mut buff).expect("can't read anything"); // ignore here too
-    println!("{:?}", String::from_utf8(buff).unwrap());
+    let response_packet = Packet::read_from(&mut stream).unwrap();
+    println!("{:?}", response_packet);
 }
