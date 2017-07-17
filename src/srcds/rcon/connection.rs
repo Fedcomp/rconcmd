@@ -11,7 +11,7 @@ const INVALID_RCON_ID: i32 = -1;
 
 #[derive(Debug)]
 pub struct Connection {
-    packet_id: i32
+    packet_id: i32,
 }
 
 impl Connection {
@@ -21,18 +21,19 @@ impl Connection {
         let auth_packet = Packet {
             id: 0,
             net_type: SERVERDATA_AUTH,
-            body: CString::new(rcon_password).unwrap()
+            body: CString::new(rcon_password).unwrap(),
         };
 
         stream.write(&auth_packet.serialize())?;
 
         let auth_packet_response = Packet::read_from(&mut stream, OUTCOMING)?;
         if auth_packet_response.id == INVALID_RCON_ID {
-            Err(Error::new(ErrorKind::PermissionDenied, "invalid rcon password"))
+            Err(Error::new(
+                ErrorKind::PermissionDenied,
+                "invalid rcon password",
+            ))
         } else {
-            Ok(Connection {
-                packet_id: 1
-            })
+            Ok(Connection { packet_id: 1 })
         }
 
     }
@@ -72,7 +73,10 @@ mod tests {
 
         assert_eq!(connection_packet.id, 0);
         assert_eq!(connection_packet.net_type, SERVERDATA_AUTH);
-        assert_eq!(connection_packet.body.to_str().unwrap(), VALID_RCON_PASSWORD);
+        assert_eq!(
+            connection_packet.body.to_str().unwrap(),
+            VALID_RCON_PASSWORD
+        );
     }
 
     #[test]
@@ -85,13 +89,13 @@ mod tests {
             let failed_rcon_packet = Packet {
                 id: INVALID_RCON_ID,
                 net_type: SERVERDATA_AUTH_RESPONSE,
-                body: CString::new("").unwrap()
+                body: CString::new("").unwrap(),
             };
             stream.write(&failed_rcon_packet.serialize()).unwrap();
         });
 
         match Connection::new(&hostname, INVALID_RCON_PASSWORD) {
-            Ok(_) => { panic!() },
+            Ok(_) => panic!(),
             Err(e) => {
                 assert_eq!(e.description(), "invalid rcon password");
                 assert_eq!(e.kind(), ErrorKind::PermissionDenied);

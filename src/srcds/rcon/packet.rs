@@ -14,14 +14,15 @@ use super::packet_type::PacketDirection;
 pub struct Packet {
     pub id: i32,
     pub net_type: PacketType,
-    pub body: CString
+    pub body: CString,
 }
 
 impl Packet {
     fn size(&self) -> i32 {
         // packet size is not used in size
         // packet id + net_type + teminated body + empty terminated string
-        (mem::size_of::<i32>() + mem::size_of::<i32>() + self.body.as_bytes_with_nul().len() + 1) as i32
+        (mem::size_of::<i32>() + mem::size_of::<i32>() + self.body.as_bytes_with_nul().len() +
+            1) as i32
     }
 
     pub fn serialize(&self) -> Vec<u8> {
@@ -29,7 +30,8 @@ impl Packet {
 
         buff.write_i32::<LittleEndian>(self.size()).unwrap();
         buff.write_i32::<LittleEndian>(self.id).unwrap();
-        buff.write_i32::<LittleEndian>(self.net_type.value()).unwrap();
+        buff.write_i32::<LittleEndian>(self.net_type.value())
+            .unwrap();
         buff.extend(self.body.as_bytes());
         buff.push(0);
         buff.push(0);
@@ -37,7 +39,7 @@ impl Packet {
         buff
     }
 
-    pub fn read_from<S: Read>(stream: &mut S, direction: PacketDirection) -> Result<Packet, Error>{
+    pub fn read_from<S: Read>(stream: &mut S, direction: PacketDirection) -> Result<Packet, Error> {
         // packet id (4) - packet size (4) - two zero bytes (2)
         const SERVICE_FIELDS_SIZE: usize = 10;
 
@@ -56,7 +58,7 @@ impl Packet {
         Ok(Packet {
             id: id,
             net_type: net_type,
-            body: body
+            body: body,
         })
     }
 }
@@ -79,7 +81,7 @@ mod tests {
         let mut packet = Packet {
             id: 0,
             net_type: PacketType::SERVERDATA_AUTH,
-            body: CString::new("").unwrap()
+            body: CString::new("").unwrap(),
         };
 
         assert_eq!(packet.size(), 10);
@@ -94,7 +96,7 @@ mod tests {
         let packet = Packet {
             id: 0,
             net_type: PacketType::SERVERDATA_AUTH,
-            body: CString::new("passwrd").unwrap()
+            body: CString::new("passwrd").unwrap(),
         };
 
         assert_eq!(packet.serialize()[..], OUTGOING_AUTH_PACKET);
