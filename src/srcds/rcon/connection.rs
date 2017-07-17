@@ -15,7 +15,7 @@ pub struct Connection {
 }
 
 impl Connection {
-    fn new(hostname: &str, rcon_password: &str) -> Result<Connection, Error> {
+    pub fn new(hostname: &str, rcon_password: &str) -> Result<Connection, Error> {
         let mut stream = TcpStream::connect(hostname)?;
 
         let auth_packet = Packet {
