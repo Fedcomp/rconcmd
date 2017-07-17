@@ -4,7 +4,8 @@ use std::io::prelude::*;
 use std::net::TcpStream;
 
 use super::Packet;
-use super::PacketType::{SERVERDATA_AUTH, SERVERDATA_AUTH_RESPONSE};
+use super::PacketType::SERVERDATA_AUTH;
+use super::PacketDirection::OUTCOMING;
 
 const INVALID_RCON_ID: i32 = -1;
 
@@ -25,7 +26,7 @@ impl Connection {
 
         stream.write(&auth_packet.serialize())?;
 
-        let auth_packet_response = Packet::read_from(&mut stream).unwrap();
+        let auth_packet_response = Packet::read_from(&mut stream, OUTCOMING).unwrap();
         println!("{:?}", auth_packet_response);
         if auth_packet_response.id == INVALID_RCON_ID {
             Err(Error::new(ErrorKind::PermissionDenied, "invalid rcon password"))
@@ -44,6 +45,9 @@ mod tests {
     use std::thread;
     use std::net::TcpListener;
     use std::error::Error;
+
+    use super::super::PacketDirection::INCOMING;
+    use super::super::PacketType::SERVERDATA_AUTH_RESPONSE;
 
     const VALID_RCON_PASSWORD: &str = "somespecialrconpassword";
     const INVALID_RCON_PASSWORD: &str = "somenonspecialrconpassword";
@@ -65,7 +69,7 @@ mod tests {
         });
 
         let (mut stream, _) = listener.accept().unwrap();
-        let connection_packet = Packet::read_from(&mut stream).unwrap();
+        let connection_packet = Packet::read_from(&mut stream, INCOMING).unwrap();
 
         assert_eq!(connection_packet.id, 0);
         assert_eq!(connection_packet.net_type, SERVERDATA_AUTH);

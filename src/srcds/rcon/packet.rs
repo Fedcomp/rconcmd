@@ -7,7 +7,8 @@ use std::io::Cursor;
 extern crate byteorder;
 use self::byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 
-use super::PacketType;
+use super::packet_type::PacketType;
+use super::packet_type::PacketDirection;
 
 #[derive(Debug)]
 pub struct Packet {
@@ -36,7 +37,7 @@ impl Packet {
         buff
     }
 
-    pub fn read_from<S>(stream: &mut S) -> Result<Packet, Error> where S: Read {
+    pub fn read_from<S>(stream: &mut S, direction: PacketDirection) -> Result<Packet, Error> where S: Read {
         let packet_size = stream.read_i32::<LittleEndian>().unwrap();
         let mut packet: Vec<u8> = vec![0; packet_size as usize];
         let _ = stream.read_exact(&mut packet);
@@ -44,7 +45,7 @@ impl Packet {
 
         let id = stream.read_i32::<LittleEndian>().unwrap();
         let net_type = stream.read_i32::<LittleEndian>().unwrap();
-        let net_type = PacketType::from_value(net_type, false);
+        let net_type = PacketType::from_value(net_type, direction);
         let mut body = vec![0; (packet_size as usize) - 4 - 4 - 2];
         let _ = stream.read_exact(&mut body);
         let body = CString::new(body).unwrap();
@@ -60,6 +61,7 @@ impl Packet {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::super::packet_type::PacketDirection::OUTCOMING;
 
     const OUTGOING_AUTH_PACKET: [u8; 21] = [
         0x11, 0x00, 0x00, 0x00, // Size
@@ -98,7 +100,7 @@ mod tests {
     #[test]
     fn test_read_from() {
         let mut stream = Cursor::new(OUTGOING_AUTH_PACKET);
-        let packet = Packet::read_from(&mut stream).unwrap();
+        let packet = Packet::read_from(&mut stream, OUTCOMING).unwrap();
 
         assert_eq!(packet.id, 0);
         assert_eq!(packet.net_type, PacketType::SERVERDATA_AUTH);

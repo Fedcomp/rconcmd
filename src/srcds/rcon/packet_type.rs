@@ -1,5 +1,4 @@
-pub const OUTCOMING_PACKET: bool = true;
-pub const INCOMING_PACKET:  bool = false;
+pub enum PacketDirection {INCOMING, OUTCOMING}
 
 #[allow(non_camel_case_types)]
 #[derive(Debug)]
@@ -12,12 +11,17 @@ pub enum PacketType {
 }
 
 impl PacketType {
-    pub fn from_value(raw_type: i32, outcoming: bool) -> PacketType {
+    pub fn from_value(raw_type: i32, direction: PacketDirection) -> PacketType {
         use self::PacketType::*;
 
         match raw_type {
             3 => SERVERDATA_AUTH,
-            2 => { if outcoming { SERVERDATA_EXECCOMMAND } else { SERVERDATA_AUTH_RESPONSE } },
+            2 => {
+                match direction {
+                    PacketDirection::INCOMING  => SERVERDATA_AUTH_RESPONSE,
+                    PacketDirection::OUTCOMING => SERVERDATA_EXECCOMMAND
+                }
+            },
             _ => SERVERDATA_RESPONSE_VALUE
         }
     }
@@ -38,13 +42,14 @@ impl PacketType {
 mod tests {
     use super::*;
     use super::PacketType::*;
+    use super::PacketDirection::*;
 
     #[test]
     fn test_from_value() {
-        assert_eq!(PacketType::from_value(3, OUTCOMING_PACKET), SERVERDATA_AUTH);
-        assert_eq!(PacketType::from_value(2, INCOMING_PACKET ), SERVERDATA_AUTH_RESPONSE);
-        assert_eq!(PacketType::from_value(2, OUTCOMING_PACKET), SERVERDATA_EXECCOMMAND);
-        assert_eq!(PacketType::from_value(0, OUTCOMING_PACKET), SERVERDATA_RESPONSE_VALUE);
+        assert_eq!(PacketType::from_value(3, OUTCOMING), SERVERDATA_AUTH);
+        assert_eq!(PacketType::from_value(2, INCOMING ), SERVERDATA_AUTH_RESPONSE);
+        assert_eq!(PacketType::from_value(2, OUTCOMING), SERVERDATA_EXECCOMMAND);
+        assert_eq!(PacketType::from_value(0, OUTCOMING), SERVERDATA_RESPONSE_VALUE);
     }
 
     #[test]
