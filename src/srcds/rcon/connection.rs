@@ -26,8 +26,7 @@ impl Connection {
 
         stream.write(&auth_packet.serialize())?;
 
-        let auth_packet_response = Packet::read_from(&mut stream, OUTCOMING).unwrap();
-        println!("{:?}", auth_packet_response);
+        let auth_packet_response = Packet::read_from(&mut stream, OUTCOMING)?;
         if auth_packet_response.id == INVALID_RCON_ID {
             Err(Error::new(ErrorKind::PermissionDenied, "invalid rcon password"))
         } else {
@@ -65,7 +64,7 @@ mod tests {
         let (listener, hostname) = local_tcp_server();
 
         let _t = thread::spawn(move || {
-            let _connection = Connection::new(&hostname, VALID_RCON_PASSWORD).unwrap();
+            let _ = Connection::new(&hostname, VALID_RCON_PASSWORD);
         });
 
         let (mut stream, _) = listener.accept().unwrap();
@@ -74,8 +73,6 @@ mod tests {
         assert_eq!(connection_packet.id, 0);
         assert_eq!(connection_packet.net_type, SERVERDATA_AUTH);
         assert_eq!(connection_packet.body.to_str().unwrap(), VALID_RCON_PASSWORD);
-
-        // _t.join();
     }
 
     #[test]
@@ -96,8 +93,6 @@ mod tests {
         match Connection::new(&hostname, INVALID_RCON_PASSWORD) {
             Ok(_) => { panic!() },
             Err(e) => {
-                println!("{:?}", e);
-
                 assert_eq!(e.description(), "invalid rcon password");
                 assert_eq!(e.kind(), ErrorKind::PermissionDenied);
             }
