@@ -14,7 +14,7 @@ fn main() {
     };
 
     let _ = stream.write(&packet.serialize()).expect("can't send auth");
-    let response_packet = Packet::read_from(&mut stream).unwrap();
+    let _ = Packet::read_from(&mut stream).unwrap();
 
     // if id == 255 == failed
     let command_packet = Packet {
