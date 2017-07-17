@@ -37,18 +37,21 @@ impl Packet {
         buff
     }
 
-    pub fn read_from<S>(stream: &mut S, direction: PacketDirection) -> Result<Packet, Error> where S: Read {
-        let packet_size = stream.read_i32::<LittleEndian>().unwrap();
-        let mut packet: Vec<u8> = vec![0; packet_size as usize];
-        let _ = stream.read_exact(&mut packet);
-        let mut stream = Cursor::new(packet);
+    pub fn read_from<S: Read>(stream: &mut S, direction: PacketDirection) -> Result<Packet, Error>{
+        // packet id (4) - packet size (4) - two zero bytes (2)
+        const SERVICE_FIELDS_SIZE: usize = 10;
 
-        let id = stream.read_i32::<LittleEndian>().unwrap();
-        let net_type = stream.read_i32::<LittleEndian>().unwrap();
+        let packet_size = stream.read_i32::<LittleEndian>()? as usize;
+        let mut packet_contents: Vec<u8> = vec![0; packet_size];
+        stream.read_exact(&mut packet_contents)?;
+
+        let mut stream = Cursor::new(packet_contents);
+        let id = stream.read_i32::<LittleEndian>()?;
+        let net_type = stream.read_i32::<LittleEndian>()?;
         let net_type = PacketType::from_value(net_type, direction);
-        let mut body = vec![0; (packet_size as usize) - 4 - 4 - 2];
-        let _ = stream.read_exact(&mut body);
-        let body = CString::new(body).unwrap();
+        let mut body = vec![0; packet_size - SERVICE_FIELDS_SIZE];
+        stream.read_exact(&mut body)?;
+        let body = CString::new(body)?;
 
         Ok(Packet {
             id: id,
