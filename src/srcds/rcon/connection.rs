@@ -26,7 +26,11 @@ impl Connection {
         };
         stream.write(&auth_packet.serialize())?;
 
-        let auth_packet_response = Packet::read_from(&mut stream, OUTCOMING)?;
+        // Somehow srcds returns us SERVERDATA_RESPONSE_VALUE first
+        // we probably can safely ignore it
+        let _ = Packet::read_from(&mut stream, INCOMING)?;
+
+        let auth_packet_response = Packet::read_from(&mut stream, INCOMING)?;
         if auth_packet_response.id == INVALID_RCON_ID {
             Err(Error::new(
                 ErrorKind::PermissionDenied,
@@ -100,12 +104,22 @@ mod tests {
         let _t = thread::spawn(move || {
             let (mut stream, _) = listener.accept().unwrap();
 
+            // empty auth packet
+            let empty_response_packet = Packet {
+                id: INVALID_RCON_ID,
+                net_type: SERVERDATA_AUTH_RESPONSE,
+                body: CString::new("").unwrap(),
+            };
+
             let failed_rcon_packet = Packet {
                 id: INVALID_RCON_ID,
                 net_type: SERVERDATA_AUTH_RESPONSE,
                 body: CString::new("").unwrap(),
             };
-            stream.write(&failed_rcon_packet.serialize()).unwrap();
+
+            let mut combined_packets = empty_response_packet.serialize();
+            combined_packets.extend(failed_rcon_packet.serialize());
+            stream.write(&combined_packets).unwrap();
         });
 
         match Connection::new(&hostname, INVALID_RCON_PASSWORD) {
@@ -132,13 +146,23 @@ mod tests {
 
         let (mut stream, _) = listener.accept().unwrap();
 
+        // empty auth packet
+        let empty_response_packet = Packet {
+            id: INVALID_RCON_ID,
+            net_type: SERVERDATA_AUTH_RESPONSE,
+            body: CString::new("").unwrap(),
+        };
+
         // Send success to connection
         let success_auth_packet = Packet {
             id: 0,
             net_type: SERVERDATA_AUTH_RESPONSE,
             body: CString::new("").unwrap(),
         };
-        stream.write(&success_auth_packet.serialize()).unwrap();
+
+        let mut combined_packets = empty_response_packet.serialize();
+        combined_packets.extend(success_auth_packet.serialize());
+        stream.write(&combined_packets).unwrap();
 
         // Drop auth packet
         Packet::read_from(&mut stream, OUTCOMING).unwrap();
@@ -172,13 +196,23 @@ mod tests {
         let _t = thread::spawn(move || {
             let (mut stream, _) = listener.accept().unwrap();
 
+            // empty auth packet
+            let empty_response_packet = Packet {
+                id: INVALID_RCON_ID,
+                net_type: SERVERDATA_AUTH_RESPONSE,
+                body: CString::new("").unwrap(),
+            };
+
             // Send success to connection
             let success_auth_packet = Packet {
                 id: 0,
                 net_type: SERVERDATA_AUTH_RESPONSE,
                 body: CString::new("").unwrap(),
             };
-            stream.write(&success_auth_packet.serialize()).unwrap();
+
+            let mut combined_packets = empty_response_packet.serialize();
+            combined_packets.extend(success_auth_packet.serialize());
+            stream.write(&combined_packets).unwrap();
         });
 
         let mut connection = Connection::new(&hostname, VALID_RCON_PASSWORD).unwrap();
