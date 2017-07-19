@@ -5,3 +5,4 @@ authors = ["Fedcomp"]
 
 [dependencies]
 byteorder = "1"
+clap = "2.19"
