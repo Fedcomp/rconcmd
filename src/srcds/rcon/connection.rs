@@ -5,7 +5,7 @@ use std::net::TcpStream;
 
 use super::Packet;
 use super::PacketType::{SERVERDATA_AUTH, SERVERDATA_EXECCOMMAND};
-use super::PacketDirection::OUTCOMING;
+use super::PacketDirection::{INCOMING, OUTCOMING};
 
 const INVALID_RCON_ID: i32 = -1;
 
@@ -40,7 +40,7 @@ impl Connection {
         }
     }
 
-    pub fn send_command(&mut self, command: &str) -> Result<(), Error> {
+    pub fn send_command(&mut self, command: &str) -> Result<CString, Error> {
         let cmd = CString::new(command)?;
         let command_packet = Packet {
             id: 1,
@@ -49,7 +49,8 @@ impl Connection {
         };
 
         self.connection.write(&command_packet.serialize())?;
-        Ok(())
+        let response_body = Packet::read_from(&mut self.connection, INCOMING)?.body;
+        Ok(response_body)
     }
 }
 
@@ -60,7 +61,6 @@ mod tests {
     use std::net::TcpListener;
     use std::error::Error;
 
-    use super::super::PacketDirection::INCOMING;
     use super::super::PacketType::SERVERDATA_AUTH_RESPONSE;
 
     const VALID_RCON_PASSWORD: &str = "somespecialrconpassword";
@@ -122,9 +122,12 @@ mod tests {
         const RCON_COMMAND: &str = "echo 123";
         let (listener, hostname) = local_tcp_server();
 
-        let _t = thread::spawn(move || {
+        let t = thread::spawn(move || {
             let mut connection = Connection::new(&hostname, VALID_RCON_PASSWORD).unwrap();
-            let _ = connection.send_command(RCON_COMMAND);
+            match connection.send_command(RCON_COMMAND) {
+                Err(_) => panic!(),
+                Ok(s) => assert_eq!("123", s.to_str().unwrap())
+            }
         });
 
         let (mut stream, _) = listener.accept().unwrap();
@@ -149,6 +152,16 @@ mod tests {
             command_packet.body.to_str().unwrap(),
             RCON_COMMAND
         );
+
+        // and send command execution response
+        let success_auth_packet = Packet {
+            id: 3,
+            net_type: SERVERDATA_AUTH_RESPONSE,
+            body: CString::new("123").unwrap(),
+        };
+        stream.write(&success_auth_packet.serialize()).unwrap();
+
+        t.join().unwrap();
     }
 
     #[test]
