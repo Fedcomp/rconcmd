@@ -5,7 +5,7 @@ use std::net::TcpStream;
 
 use super::Packet;
 use super::PacketType::{SERVERDATA_AUTH, SERVERDATA_EXECCOMMAND};
-use super::PacketDirection::{INCOMING, OUTCOMING};
+use super::PacketDirection::INCOMING;
 
 const INVALID_RCON_ID: i32 = -1;
 
@@ -66,16 +66,24 @@ mod tests {
     use std::error::Error;
 
     use super::super::PacketType::SERVERDATA_AUTH_RESPONSE;
+    use super::super::PacketDirection::OUTCOMING;
 
     const VALID_RCON_PASSWORD: &str = "somespecialrconpassword";
     const INVALID_RCON_PASSWORD: &str = "somenonspecialrconpassword";
 
     fn local_tcp_server() -> (TcpListener, String) {
-        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-        let listen_port = listener.local_addr().unwrap().port();
-        let hostname = format!("127.0.0.1:{}", listen_port);
+        loop {
+            let bind_result = TcpListener::bind("127.0.0.1:0");
 
-        (listener, hostname)
+            if let Err(_) = bind_result {
+                continue;
+            }
+
+            let listener = bind_result.unwrap();
+            let listen_port = listener.local_addr().unwrap().port();
+            let hostname = format!("127.0.0.1:{}", listen_port);
+            break (listener, hostname)
+        }
     }
 
     #[test]
