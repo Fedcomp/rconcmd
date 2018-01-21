@@ -6,4 +6,4 @@
 srcds:
   build: docker/srcds
   ports:
-    - 27015/tcp:27015
+    - 27015:27015/tcp
