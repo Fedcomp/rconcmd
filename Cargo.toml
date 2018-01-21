@@ -4,5 +4,6 @@ version = "0.0.1"
 authors = ["Fedcomp"]
 
 [dependencies]
+bytes = "0.4"
 byteorder = "1"
 clap = "2.19"

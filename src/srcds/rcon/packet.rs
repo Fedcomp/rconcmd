@@ -4,38 +4,42 @@ use std::io::Read;
 use std::io::Error;
 use std::io::Cursor;
 
-extern crate byteorder;
-use self::byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt};
+use bytes::{BytesMut, BufMut};
 
 use super::packet_type::PacketType;
 use super::packet_type::PacketDirection;
 
 #[derive(Debug)]
 pub struct Packet {
-    pub id: i32,
+    pub id: i32, // 4 bytes, server can return -1 when rcon is invalid
     pub net_type: PacketType,
     pub body: CString,
 }
 
 impl Packet {
-    fn size(&self) -> i32 {
+    fn size(&self) -> u32 {
+        // const
+        let u32_size: usize = mem::size_of::<u32>();
+
         // packet size is not used in size
-        // packet id + net_type + teminated body + empty terminated string
-        (mem::size_of::<i32>() + mem::size_of::<i32>() + self.body.as_bytes_with_nul().len() +
-            1) as i32
+        (
+            u32_size + // packet id
+            u32_size + // net_type
+            self.body.as_bytes_with_nul().len() + // teminated body
+            1 // empty terminated string
+        ) as u32
     }
 
-    pub fn serialize(&self) -> Vec<u8> {
-        let mut buff = vec![];
+    pub fn serialize(&self) -> BytesMut {
+        let packet_size = self.size();
+        let mut buff = BytesMut::with_capacity(packet_size as usize);
 
-        buff.write_i32::<LittleEndian>(self.size()).unwrap();
-        buff.write_i32::<LittleEndian>(self.id).unwrap();
-        buff.write_i32::<LittleEndian>(self.net_type.value())
-            .unwrap();
+        buff.put_u32::<LittleEndian>(packet_size);
+        buff.put_i32::<LittleEndian>(self.id);
+        buff.put_i32::<LittleEndian>(self.net_type.value());
         buff.extend(self.body.as_bytes());
-        buff.push(0);
-        buff.push(0);
-
+        buff.put_slice(b"\x00\x00");
         buff
     }
 
@@ -44,10 +48,10 @@ impl Packet {
         const SERVICE_FIELDS_SIZE: usize = 10;
 
         let packet_size = stream.read_i32::<LittleEndian>()? as usize;
-        let mut packet_contents: Vec<u8> = vec![0; packet_size];
-        stream.read_exact(&mut packet_contents)?;
+        let mut raw_packet: Vec<u8> = vec![0; packet_size];
+        stream.read_exact(&mut raw_packet)?;
 
-        let mut stream = Cursor::new(packet_contents);
+        let mut stream = Cursor::new(raw_packet);
         let id = stream.read_i32::<LittleEndian>()?;
         let net_type = stream.read_i32::<LittleEndian>()?;
         let net_type = PacketType::from_value(net_type, direction);
@@ -88,7 +92,6 @@ mod tests {
 
         packet.body = CString::new("body").unwrap();
         assert_eq!(packet.size(), 14);
-        assert_eq!(packet.size(), (packet.serialize().len() - 4) as i32);
     }
 
     #[test]
