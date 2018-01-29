@@ -3,6 +3,7 @@ use std::mem;
 use std::io::Read;
 use std::io::Error;
 use std::io::Cursor;
+use std::io;
 
 use byteorder::{LittleEndian, ReadBytesExt};
 use bytes::{BytesMut, BufMut};
@@ -18,6 +19,17 @@ pub struct Packet {
 }
 
 impl Packet {
+    pub fn new(id: i32, net_type: PacketType, body: &str) -> io::Result<Packet> {
+        let body = CString::new(body)?;
+        let packet = Packet {
+            id: id,
+            net_type: net_type,
+            body: body
+        };
+
+        Ok(packet)
+    }
+
     fn size(&self) -> u32 {
         // const
         let u32_size: usize = mem::size_of::<u32>();
@@ -82,11 +94,7 @@ mod tests {
 
     #[test]
     fn test_size() {
-        let mut packet = Packet {
-            id: 0,
-            net_type: PacketType::SERVERDATA_AUTH,
-            body: CString::new("").unwrap(),
-        };
+        let mut packet = Packet::new(0, PacketType::SERVERDATA_AUTH, "").unwrap();
 
         assert_eq!(packet.size(), 10);
 
@@ -96,12 +104,7 @@ mod tests {
 
     #[test]
     fn test_serialize() {
-        let packet = Packet {
-            id: 0,
-            net_type: PacketType::SERVERDATA_AUTH,
-            body: CString::new("passwrd").unwrap(),
-        };
-
+        let packet = Packet::new(0, PacketType::SERVERDATA_AUTH, "passwrd").unwrap();
         assert_eq!(packet.serialize()[..], OUTGOING_AUTH_PACKET);
     }
 

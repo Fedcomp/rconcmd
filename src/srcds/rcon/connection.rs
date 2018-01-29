@@ -19,11 +19,7 @@ impl Connection {
     pub fn new(hostname: &str, rcon_password: &str) -> Result<Connection, Error> {
         let mut stream = TcpStream::connect(hostname)?;
 
-        let auth_packet = Packet {
-            id: 0,
-            net_type: SERVERDATA_AUTH,
-            body: CString::new(rcon_password).unwrap(),
-        };
+        let auth_packet = Packet::new(0, SERVERDATA_AUTH, rcon_password)?;
         stream.write(&auth_packet.serialize())?;
 
         // Somehow srcds returns us SERVERDATA_RESPONSE_VALUE first
@@ -45,14 +41,9 @@ impl Connection {
     }
 
     pub fn send_command(&mut self, command: &str) -> Result<CString, Error> {
-        let cmd = CString::new(command)?;
-        let command_packet = Packet {
-            id: 1,
-            net_type: SERVERDATA_EXECCOMMAND,
-            body: cmd
-        };
-
+        let command_packet = Packet::new(1, SERVERDATA_EXECCOMMAND, command)?;
         self.connection.write(&command_packet.serialize())?;
+
         let response_body = Packet::read_from(&mut self.connection, INCOMING)?.body;
         Ok(response_body)
     }
