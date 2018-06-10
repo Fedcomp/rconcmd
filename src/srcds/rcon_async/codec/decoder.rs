@@ -19,7 +19,10 @@ impl Decoder for Codec {
 
     fn decode(&mut self, buf: &mut BytesMut) -> io::Result<Option<Self::Item>> {
         match read_packet(buf) {
-            Ok(packet) => Ok(Some(packet)),
+            Ok(packet) => {
+                println!("> {:?}", packet);
+                Ok(Some(packet))
+            },
             Err(_) => Ok(None)
         }
     }

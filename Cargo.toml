@@ -1,14 +1,16 @@
 [package]
 name = "rconcmd"
-version = "0.0.1"
+version = "0.2.0"
 authors = ["Fedcomp"]
+
+[[bin]]
+name = "async_rconcmd"
+path = "src/bin/async_rconcmd.rs"
 
 [dependencies]
 bytes = "0.4"
 byteorder = "1"
 clap = "2.19"
-futures = "0.1"
-tokio-core = "0.1"
+tokio = "0.1"
 tokio-io = "0.1"
-tokio-proto = "0.1"
-tokio-service = "0.1"
+futures = "0.1"

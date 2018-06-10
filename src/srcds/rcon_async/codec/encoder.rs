@@ -9,7 +9,9 @@ impl Encoder for Codec {
     type Error = io::Error;
 
     fn encode(&mut self, packet: Self::Item, buf: &mut BytesMut) -> io::Result<()> {
-        buf.extend(packet.serialize());
+        let packet_contents = packet.serialize();
+        println!("< {:?}", packet_contents);
+        buf.extend(packet_contents);
         Ok(())
     }
 }
