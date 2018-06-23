@@ -6,5 +6,6 @@ extern crate tokio;
 extern crate tokio_io;
 extern crate futures;
 extern crate tokio_dns;
+#[macro_use] extern crate failure;
 
 pub mod srcds;

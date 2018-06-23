@@ -4,8 +4,7 @@ pub enum PacketDirection {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum PacketType {
     SERVERDATA_AUTH,
     SERVERDATA_AUTH_RESPONSE,

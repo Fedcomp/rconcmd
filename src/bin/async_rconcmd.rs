@@ -7,6 +7,8 @@ extern crate tokio_dns;
 extern crate futures;
 
 use clap::{Arg, App};
+use futures::Future;
+
 use rconcmd::srcds::rcon::AsyncConnection;
 
 fn main() {
@@ -25,7 +27,9 @@ fn main() {
 
     let hostname = matches.value_of("hostname").unwrap();
     let rcon_password = matches.value_of("rcon").unwrap();
-    let connection = AsyncConnection::connect(hostname, rcon_password);
+    let connection = AsyncConnection::connect(hostname, rcon_password).map_err(|err| {
+        println!("err = {:?}", err);
+    });
 
     tokio::run(connection);
 }

@@ -11,6 +11,10 @@ impl Encoder for Codec {
     type Error = io::Error;
 
     fn encode(&mut self, packet: Self::Item, buf: &mut BytesMut) -> io::Result<()> {
+        let mut packet = packet.clone();
+        packet.id = self.packet_id_increment;
+        self.packet_id_increment += 1;
+
         println!("> {:?}", packet);
         let packet_contents = packet.serialize();
         buf.extend(packet_contents);

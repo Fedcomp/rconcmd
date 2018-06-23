@@ -11,7 +11,7 @@ use bytes::{BytesMut, BufMut};
 use super::packet_type::PacketType;
 use super::packet_type::PacketDirection;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Packet {
     pub id: i32, // 4 bytes, server can return -1 when rcon is invalid
     pub net_type: PacketType,

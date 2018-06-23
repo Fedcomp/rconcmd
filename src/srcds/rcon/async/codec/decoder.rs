@@ -24,7 +24,6 @@ impl Decoder for Codec {
     type Error = io::Error;
 
     fn decode(&mut self, buf: &mut BytesMut) -> io::Result<Option<Self::Item>> {
-        // println!("Decode!");
         match read_packet(buf) {
             Ok(packet) => {
                 println!("< {:?}", packet);
