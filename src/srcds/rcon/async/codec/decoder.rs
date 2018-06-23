@@ -1,8 +1,10 @@
 use std::io;
+
 use bytes::BytesMut;
 use tokio_io::codec::Decoder;
-use super::super::super::rcon::PacketDirection::INCOMING;
-use super::super::super::rcon::Packet;
+
+use srcds::rcon::Packet;
+use srcds::rcon::PacketDirection::INCOMING;
 
 use super::Codec;
 
@@ -32,3 +34,5 @@ impl Decoder for Codec {
         }
     }
 }
+
+// TODO: Tests

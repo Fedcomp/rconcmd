@@ -1,7 +1,9 @@
 use std::io;
+
 use bytes::BytesMut;
 use tokio_io::codec::Encoder;
-use super::super::super::rcon::Packet;
+
+use srcds::rcon::Packet;
 use super::Codec;
 
 impl Encoder for Codec {
@@ -15,3 +17,5 @@ impl Encoder for Codec {
         Ok(())
     }
 }
+
+// TODO: Tests

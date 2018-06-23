@@ -18,7 +18,8 @@ use rconcmd::srcds::rcon::Packet;
 use rconcmd::srcds::rcon::connection::INVALID_RCON_ID;
 use rconcmd::srcds::rcon::PacketType::*;
 use rconcmd::srcds::rcon::PacketDirection::*;
-use rconcmd::srcds::rcon_async::codec::Codec as RconCodec;
+use rconcmd::srcds::rcon::async::codec::Codec as RconCodec;
+use rconcmd::srcds::rcon::AsyncConnection;
 
 fn main() {
     let matches = App::new("async_rconcmd")
@@ -37,20 +38,7 @@ fn main() {
     let hostname = matches.value_of("hostname").unwrap();
     let rcon_password = matches.value_of("rcon").unwrap().to_string();
 
-    let connection = TcpStream::connect(hostname).and_then(|tcp| {
-        println!("Connected");
-        let proto = tcp.framed(RconCodec);
-        let auth_packet = Packet::new(0, SERVERDATA_AUTH, "12345").unwrap();
-        proto.send(auth_packet)
-    }).and_then(|proto| {
-        println!("Now listen {:?}", proto);
-        proto.for_each(|stuff| {
-            println!("Incoming {:?}", stuff);
-            Ok(())
-        })
-    }).map_err(|err| {
-        println!("err = {:?}", err);
-    });
+    let connection = AsyncConnection::connect(hostname.to_string());
 
     tokio::run(connection);
 }
