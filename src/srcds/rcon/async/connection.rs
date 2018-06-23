@@ -10,7 +10,7 @@ use srcds::rcon::PacketType::*;
 use srcds::rcon::Packet;
 
 pub struct Connection {
-    proto: Framed<TokioTcpStream, RconCodec>
+    pub proto: Framed<TokioTcpStream, RconCodec>
 }
 
 const INVALID_RCON_ID: i32 = -1;
@@ -25,6 +25,7 @@ impl Connection {
                     let proto = tcp.framed(RconCodec::new());
                     proto.send(auth_packet)
                 })
+                // Generate request for first response packet
                 .and_then(|proto| proto.into_future().map_err(|(e, _)| e) )
                 // skip SERVERDATA_RESPONSE_VALUE
                 // TODO: Handle stream is over

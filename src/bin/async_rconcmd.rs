@@ -7,9 +7,11 @@ extern crate tokio_dns;
 extern crate futures;
 
 use clap::{Arg, App};
-use futures::Future;
+use futures::{Future, Sink, Stream};
 
 use rconcmd::srcds::rcon::AsyncConnection;
+use rconcmd::srcds::rcon::PacketType::*;
+use rconcmd::srcds::rcon::Packet;
 
 fn main() {
     let matches = App::new("async_rconcmd")
@@ -28,7 +30,16 @@ fn main() {
     let hostname = matches.value_of("hostname").unwrap();
     let rcon_password = matches.value_of("rcon").unwrap();
     let connection = AsyncConnection::connect(hostname, rcon_password).and_then(|connection| {
-        Ok(())
+        let proto = connection.proto;
+        proto.send(Packet::new(0, SERVERDATA_EXECCOMMAND, "echo 123").unwrap())
+    }).and_then(|proto| {
+        proto.for_each(|packet| {
+            if packet.net_type == SERVERDATA_RESPONSE_VALUE {
+                println!("{}", packet.body.into_string().unwrap());
+            }
+
+            Ok(())
+        })
     }).map_err(|err| {
         println!("err = {:?}", err);
     });
