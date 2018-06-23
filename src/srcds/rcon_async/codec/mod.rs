@@ -1,5 +1,5 @@
-pub mod encoder;
-pub mod decoder;
+mod encoder;
+mod decoder;
 
 #[derive(Debug)]
 pub struct Codec;

@@ -7,7 +7,7 @@ use super::Packet;
 use super::PacketType::{SERVERDATA_AUTH, SERVERDATA_EXECCOMMAND};
 use super::PacketDirection::INCOMING;
 
-const INVALID_RCON_ID: i32 = -1;
+pub const INVALID_RCON_ID: i32 = -1;
 
 #[derive(Debug)]
 pub struct Connection {
