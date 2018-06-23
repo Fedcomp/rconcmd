@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "strict", deny(warnings))]
+
 use std::io::Error;
 use std::io;
 use std::io::{Write, BufRead};

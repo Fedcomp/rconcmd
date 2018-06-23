@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "strict", deny(warnings))]
+
 extern crate bytes;
 extern crate byteorder;
 extern crate tokio;

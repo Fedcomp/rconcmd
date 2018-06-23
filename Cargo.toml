@@ -7,6 +7,10 @@ authors = ["Fedcomp"]
 name = "async_rconcmd"
 path = "src/bin/async_rconcmd.rs"
 
+[features]
+# Treat warnings as a build error.
+strict = []
+
 [dependencies]
 bytes = "0.4"
 byteorder = "1"

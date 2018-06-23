@@ -24,7 +24,7 @@ impl Packet {
         let packet = Packet {
             id: id,
             net_type: net_type,
-            body: body
+            body: body,
         };
 
         Ok(packet)

@@ -12,7 +12,7 @@ pub const INVALID_RCON_ID: i32 = -1;
 #[derive(Debug)]
 pub struct Connection {
     packet_id: i32,
-    connection: TcpStream
+    connection: TcpStream,
 }
 
 impl Connection {
@@ -35,7 +35,7 @@ impl Connection {
         } else {
             Ok(Connection {
                 packet_id: 1,
-                connection: stream
+                connection: stream,
             })
         }
     }
@@ -73,7 +73,7 @@ mod tests {
             let listener = bind_result.unwrap();
             let listen_port = listener.local_addr().unwrap().port();
             let hostname = format!("127.0.0.1:{}", listen_port);
-            break (listener, hostname)
+            break (listener, hostname);
         }
     }
 
@@ -139,7 +139,7 @@ mod tests {
             let mut connection = Connection::new(&hostname, VALID_RCON_PASSWORD).unwrap();
             match connection.send_command(RCON_COMMAND) {
                 Err(_) => panic!(),
-                Ok(s) => assert_eq!("123", s.to_str().unwrap())
+                Ok(s) => assert_eq!("123", s.to_str().unwrap()),
             }
         });
 
@@ -171,10 +171,7 @@ mod tests {
 
         assert_eq!(command_packet.id, 1);
         assert_eq!(command_packet.net_type, SERVERDATA_EXECCOMMAND);
-        assert_eq!(
-            command_packet.body.to_str().unwrap(),
-            RCON_COMMAND
-        );
+        assert_eq!(command_packet.body.to_str().unwrap(), RCON_COMMAND);
 
         // and send command execution response
         let success_auth_packet = Packet {

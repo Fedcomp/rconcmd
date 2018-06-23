@@ -15,7 +15,7 @@ fn read_packet(buf: &mut BytesMut) -> io::Result<Packet> {
         (Packet::read_from(&mut cursor, INCOMING)?, cursor.position())
     };
 
-    buf.drain_to(size as usize);
+    buf.split_to(size as usize);
     Ok(packet)
 }
 
@@ -29,8 +29,8 @@ impl Decoder for Codec {
             Ok(packet) => {
                 println!("< {:?}", packet);
                 Ok(Some(packet))
-            },
-            Err(_) => Ok(None)
+            }
+            Err(_) => Ok(None),
         }
     }
 }
