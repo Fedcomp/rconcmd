@@ -27,7 +27,9 @@ fn main() {
 
     let hostname = matches.value_of("hostname").unwrap();
     let rcon_password = matches.value_of("rcon").unwrap();
-    let connection = AsyncConnection::connect(hostname, rcon_password).map_err(|err| {
+    let connection = AsyncConnection::connect(hostname, rcon_password).and_then(|connection| {
+        Ok(())
+    }).map_err(|err| {
         println!("err = {:?}", err);
     });
 
