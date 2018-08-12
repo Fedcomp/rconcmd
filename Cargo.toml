@@ -7,7 +7,7 @@ authors = ["Fedcomp"]
 strict = [] # Treat warnings as a build error.
 
 [dependencies]
-bytes = "0.4"
+bytes = "0.4.9"
 byteorder = "1"
 clap = "2.19"
 tokio = "0.1"
@@ -15,3 +15,4 @@ tokio-io = "0.1"
 futures = "0.1"
 failure = "0.1.1"
 tokio-dns-unofficial = "0.3.1"
+tokio-game-protocols = { git = "ssh://git@github.com:22/Fedcomp/tokio-game-protocols.git" }

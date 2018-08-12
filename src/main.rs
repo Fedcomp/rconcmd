@@ -4,15 +4,15 @@ extern crate clap;
 extern crate tokio;
 extern crate futures;
 extern crate rconcmd;
+extern crate tokio_game_protocols;
 
-use std::io::{Error, ErrorKind};
+use std::ffi::CString;
 
 use clap::{Arg, App};
 use futures::{Future, Sink, Stream};
 
-use rconcmd::srcds::rcon::AsyncConnection;
-use rconcmd::srcds::rcon::PacketType::*;
-use rconcmd::srcds::rcon::Packet;
+use rconcmd::srcds::rcon::Connection;
+use tokio_game_protocols::srcds::rcon::{Packet, PacketType::*};
 
 fn main() {
     let matches = App::new("rconcmd")
@@ -31,11 +31,13 @@ fn main() {
     let hostname = matches.value_of("hostname").unwrap(); // unwrap because required
     let rcon_password = matches.value_of("rcon").unwrap(); // unwrap because required
 
-    let connection = AsyncConnection::connect(hostname, rcon_password).and_then(|connection| {
+    let connection = Connection::connect(hostname, rcon_password).and_then(|connection| {
         let proto = connection.proto;
-        proto.send(Packet::new(0, SERVERDATA_EXECCOMMAND, "echo 123").unwrap())
+        let packet_body = CString::new("echo 123").unwrap();
+        let packet = Packet::new(0, SERVERDATA_EXECCOMMAND, packet_body);
+        proto.send(packet)
     }).and_then(|proto| {
-        let (proto_sink, proto_stream) = proto.split();
+        // let (proto_sink, proto_stream) = proto.split();
 
         // tokio::spawn(proto_stream.for_each(|packet| {
         //     if packet.net_type == SERVERDATA_RESPONSE_VALUE {
