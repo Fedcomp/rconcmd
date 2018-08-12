@@ -3,13 +3,8 @@ name = "rconcmd"
 version = "0.2.0"
 authors = ["Fedcomp"]
 
-[[bin]]
-name = "async_rconcmd"
-path = "src/bin/async_rconcmd.rs"
-
 [features]
-# Treat warnings as a build error.
-strict = []
+strict = [] # Treat warnings as a build error.
 
 [dependencies]
 bytes = "0.4"

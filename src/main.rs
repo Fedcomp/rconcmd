@@ -1,62 +1,64 @@
 #![cfg_attr(feature = "strict", deny(warnings))]
 
-use std::io::Error;
-use std::io;
-use std::io::{Write, BufRead};
-use std::process;
-
 extern crate clap;
-use clap::{Arg, App};
-
+extern crate tokio;
+extern crate futures;
 extern crate rconcmd;
-use rconcmd::srcds::rcon::Connection;
+
+use std::io::{Error, ErrorKind};
+
+use clap::{Arg, App};
+use futures::{Future, Sink, Stream};
+
+use rconcmd::srcds::rcon::AsyncConnection;
+use rconcmd::srcds::rcon::PacketType::*;
+use rconcmd::srcds::rcon::Packet;
 
 fn main() {
     let matches = App::new("rconcmd")
-                          .version("1.0")
-                          .author("Fedcomp")
-                          .about("Rcon console for srcds servers")
-                          .arg(Arg::with_name("hostname")
-                               .required(true)
-                               .takes_value(true))
-                          .arg(Arg::with_name("rcon")
-                               .required(true)
-                               .help("rcon_password of the server")
-                               .takes_value(true))
-                          .arg(Arg::with_name("execute")
-                               .short("e")
-                               .long("execute")
-                               .help("Execute single command, print response and quit")
-                               .takes_value(true))
-                          .get_matches();
+        .version("0.2.0")
+        .author("Fedcomp")
+        .about("Rcon console for srcds servers")
+        .arg(Arg::with_name("hostname").required(true).takes_value(true))
+        .arg(
+            Arg::with_name("rcon")
+                .help("rcon_password of the server")
+                .required(true)
+                .takes_value(true),
+        )
+        .get_matches();
 
-    let hostname = matches.value_of("hostname").unwrap();
-    let rcon_password = matches.value_of("rcon").unwrap();
+    let hostname = matches.value_of("hostname").unwrap(); // unwrap because required
+    let rcon_password = matches.value_of("rcon").unwrap(); // unwrap because required
 
-    let mut connection = Connection::new(hostname, rcon_password).unwrap();
+    let connection = AsyncConnection::connect(hostname, rcon_password).and_then(|connection| {
+        let proto = connection.proto;
+        proto.send(Packet::new(0, SERVERDATA_EXECCOMMAND, "echo 123").unwrap())
+    }).and_then(|proto| {
+        let (proto_sink, proto_stream) = proto.split();
 
-    // Execute single command and exit if one is specified
-    match matches.value_of("execute") {
-        None => (),
-        Some(cmd) => {
-            let res = connection.send_command(cmd).unwrap();
-            println!("{}", res.to_str().unwrap());
-            process::exit(0);
-        }
-    }
+        // tokio::spawn(proto_stream.for_each(|packet| {
+        //     if packet.net_type == SERVERDATA_RESPONSE_VALUE {
+        //         println!("{}", packet.body.into_string().unwrap());
+        //     }
+        //
+        //     Ok(())
+        // }).map_err(|_| {
+        //
+        // }));
 
-    loop {
-        let command = read_from_stdin().unwrap();
-        let res = connection.send_command(&command).unwrap();
-        println!("{}", res.to_str().unwrap());
-    }
-}
+        // let stdin = spawn_stdin_stream_unbounded()
+        // .for_each(move |line| {
+        //     let command_packet = Packet::new(0, SERVERDATA_EXECCOMMAND, &line).unwrap();
+        //     let sending_future = proto_sink.send(command_packet).and_then(|_| Ok(())).map_err(|_| {});
+        //     // tokio::spawn(sending_future);
+        //     Ok(())
+        // });
 
-fn read_from_stdin() -> Result<String, Error> {
-    print!("> ");
-    io::stdout().flush().unwrap();
-    let mut input = String::new();
-    let stdin = io::stdin();
-    stdin.lock().read_line(&mut input)?;
-    Ok(input)
+        Ok(())
+    }).map_err(|err| {
+        println!("err = {:?}", err);
+    });
+
+    tokio::run(connection);
 }
