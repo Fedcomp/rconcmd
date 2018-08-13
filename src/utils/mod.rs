@@ -1,9 +1,10 @@
+#![allow(deprecated)]
+
 use std::thread;
 use std::io;
-use futures::sync::mpsc::{channel, unbounded, Receiver, SendError, UnboundedReceiver};
+use futures::sync::mpsc::{unbounded, SendError, UnboundedReceiver};
 use tokio::prelude::stream::iter;
 use futures::Sink;
-use std::io::Read;
 use futures::Stream;
 use futures::Future;
 use std::io::BufRead;

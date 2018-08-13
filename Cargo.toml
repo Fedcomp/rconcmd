@@ -16,3 +16,7 @@ futures = "0.1"
 failure = "0.1.1"
 tokio-dns-unofficial = "0.3.1"
 tokio-game-protocols = { git = "ssh://git@github.com:22/Fedcomp/tokio-game-protocols.git" }
+log = "0.4.3"
+env_logger = "0.5.12"
+tokio-timer = "0.2.5"
+lazy_static = "1.1.0"

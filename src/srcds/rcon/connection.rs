@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use std::io::{Error, ErrorKind};
 use std::ffi::CString;
 
@@ -22,23 +24,27 @@ impl Connection {
 
         TcpStream::connect(&host[..])
             .and_then(move |tcp| {
+                trace!("Connected {:?}", tcp);
                 let proto = tcp.framed(Codec::default());
                 proto.send(auth_packet)
             })
             // Generate request for first response packet
             .and_then(|proto| proto.into_future().map_err(|(e, _)| e) )
-            // skip SERVERDATA_RESPONSE_VALUE
+            // and skip SERVERDATA_RESPONSE_VALUE
+            .map(|(_, proto)| proto )
             // TODO: Handle stream is over
-            .and_then(|(_, proto)| proto.into_future().map_err(|(e, _)| e))
+            // Generate request for response auth
+            .and_then(|proto| proto.into_future().map_err(|(e, _)| e) )
             .and_then(|(auth_response, proto)| {
-                if let Some(auth_response_packet) = auth_response {
-                    if auth_response_packet.id == INVALID_RCON_ID {
-                        Err(Error::new(ErrorKind::Other, "Invalid RCON password"))
-                    } else {
-                        Ok(Connection { proto: proto })
-                    }
-                } else {
-                    Err(Error::new(ErrorKind::Other, "Connection closed (?)"))
+                match auth_response {
+                    Some(auth_response_packet) => {
+                        if auth_response_packet.id == INVALID_RCON_ID {
+                            Err(Error::new(ErrorKind::Other, "Invalid RCON password"))
+                        } else {
+                            Ok(Connection { proto: proto })
+                        }
+                    },
+                    None => Err(Error::new(ErrorKind::Other, "Connection closed."))
                 }
             })
     }
