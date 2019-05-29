@@ -1,13 +1,13 @@
 #![allow(deprecated)]
 
-use std::thread;
-use std::io;
 use futures::sync::mpsc::{unbounded, SendError, UnboundedReceiver};
-use tokio::prelude::stream::iter;
+use futures::Future;
 use futures::Sink;
 use futures::Stream;
-use futures::Future;
+use std::io;
 use std::io::BufRead;
+use std::thread;
+use tokio::prelude::stream::iter;
 
 #[derive(Debug)]
 enum Error {

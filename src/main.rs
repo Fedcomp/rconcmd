@@ -1,25 +1,27 @@
 #![cfg_attr(feature = "strict", deny(warnings))]
 
 extern crate clap;
-extern crate tokio;
 extern crate futures;
+extern crate tokio;
+extern crate tokio_game_protocols;
 extern crate tokio_io;
 extern crate tokio_timer;
-extern crate tokio_game_protocols;
-#[macro_use] extern crate log;
+#[macro_use]
+extern crate log;
 extern crate env_logger;
-#[macro_use] extern crate lazy_static;
+#[macro_use]
+extern crate lazy_static;
 extern crate rconcmd;
 
 use std::ffi::CString;
 use std::io::{self, Write};
-use std::time::{Duration, Instant};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::sync::atomic::{Ordering, AtomicBool};
+use std::time::{Duration, Instant};
 
-use clap::{Arg, App};
-use futures::{Future, Sink, Stream};
+use clap::{App, Arg};
 use futures::sync::mpsc;
+use futures::{Future, Sink, Stream};
 use tokio_game_protocols::srcds::rcon::{Packet, PacketType::*};
 use tokio_timer::Delay;
 
@@ -40,7 +42,8 @@ fn input_ps() {
                 io::stdout().flush().unwrap();
                 PS_SCHEDULED.store(false, Ordering::Relaxed);
                 Ok(())
-            }).map_err(|e| {
+            })
+            .map_err(|e| {
                 error!("Timer error: {:?}", e);
             });
 
@@ -69,23 +72,20 @@ fn main() {
     let rcon_password = matches.value_of("rcon").unwrap(); // required
 
     let connection = Connection::connect(hostname, rcon_password)
-    .map(|connection| connection.proto )
-    .and_then(|proto| {
-        let (proto_sink, proto_stream) = proto.split();
-        let proto_sink = proto_sink.sink_map_err(|e| {
-            error!("Sink error: {:?}", e);
-        });
+        .map(|connection| connection.proto)
+        .and_then(|proto| {
+            let (proto_sink, proto_stream) = proto.split();
+            let proto_sink = proto_sink.sink_map_err(|e| {
+                error!("Sink error: {:?}", e);
+            });
 
-        let (tx, rx) = mpsc::unbounded();
-        tokio::spawn(
-            rx.forward(proto_sink).map(|_| ()).map_err(|e| {
+            let (tx, rx) = mpsc::unbounded();
+            tokio::spawn(rx.forward(proto_sink).map(|_| ()).map_err(|e| {
                 error!("rx forward error: {:?}", e);
-            })
-        );
+            }));
 
-        input_ps();
-        tokio::spawn(
-            spawn_stdin_stream_unbounded().for_each(move |input| {
+            input_ps();
+            tokio::spawn(spawn_stdin_stream_unbounded().for_each(move |input| {
                 if input == "" {
                     return Ok(());
                 }
@@ -96,25 +96,25 @@ fn main() {
                 tx.unbounded_send(packet).and_then(|_| Ok(())).map_err(|e| {
                     error!("mspc send error: {:?}", e);
                 })
+            }));
+
+            proto_stream.for_each(|incoming_packet| {
+                if incoming_packet.net_type != SERVERDATA_RESPONSE_VALUE {
+                    return Ok(());
+                }
+
+                match incoming_packet.body.into_string() {
+                    Ok(s) => print!("{}", s),
+                    Err(e) => print!("{:?}", e.into_cstring()),
+                };
+
+                input_ps();
+                Ok(())
             })
-        );
-
-        proto_stream.for_each(|incoming_packet| {
-            if incoming_packet.net_type != SERVERDATA_RESPONSE_VALUE {
-                return Ok(())
-            }
-
-            match incoming_packet.body.into_string() {
-                Ok(s) => print!("{}", s),
-                Err(e) => print!("{:?}", e.into_cstring())
-            };
-
-            input_ps();
-            Ok(())
         })
-    }).map_err(|err| {
-        error!("err = {:?}", err);
-    });
+        .map_err(|err| {
+            error!("err = {:?}", err);
+        });
 
     tokio::run(connection)
 }
