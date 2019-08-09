@@ -1,9 +1,6 @@
-# hlds:
-#   build: docker/hlds
-#   ports:
-#     - 27015/tcp:27015
-
-srcds:
-  build: docker/srcds
-  ports:
-    - 27015/tcp:27015
+version: '3'
+services:
+  srcds:  
+    build: docker/srcds
+    ports:
+      - 27015:27015
