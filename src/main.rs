@@ -3,10 +3,8 @@ use std::io;
 use std::io::{Write, BufRead};
 use std::process;
 
-extern crate clap;
 use clap::{Arg, App};
 
-extern crate rconcmd;
 use rconcmd::srcds::rcon::Connection;
 
 fn main() {

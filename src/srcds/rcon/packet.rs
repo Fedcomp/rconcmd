@@ -4,8 +4,7 @@ use std::io::Read;
 use std::io::Error;
 use std::io::Cursor;
 
-extern crate byteorder;
-use self::byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
+use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 
 use super::packet_type::PacketType;
 use super::packet_type::PacketDirection;
