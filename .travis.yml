@@ -14,7 +14,7 @@ script:
 before_deploy:
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install zip ; fi
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then zip rconcmd-${TRAVIS_TAG}-windows.zip -j target/release/rconcmd.exe ; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then tar cvfz rconcmd-${TRAVIS_TAG}-linux.tar.gz target/release/rconcmd ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then mv target/release/rconcmd . && tar cvfz rconcmd-${TRAVIS_TAG}-linux.tar.gz rconcmd ; fi
 deploy:
   skip_cleanup: true
   provider: releases
