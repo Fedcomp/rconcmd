@@ -4,6 +4,9 @@ os:
   - linux
 rust:
   - stable
+script:
+  - cargo build --release --verbose --all
+  - cargo test --release --verbose --all
 deploy:
   skip_cleanup: true
   provider: releases
