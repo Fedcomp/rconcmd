@@ -5,8 +5,12 @@ os:
 rust:
   - stable
 script:
-  - cargo build --release --verbose --all
-  - cargo test --release --verbose --all
+  # On regular test
+  - if [ -z "$TRAVIS_TAG" ]; cargo build --verbose --all; fi
+  - if [ -z "$TRAVIS_TAG" ]; cargo test --verbose --all; fi
+  # On deploy
+  - if [ -n "$TRAVIS_TAG" ]; cargo test --release --verbose --all; fi
+  - if [ -n "$TRAVIS_TAG" ]; cargo build --release --verbose --all; fi
 deploy:
   skip_cleanup: true
   provider: releases
