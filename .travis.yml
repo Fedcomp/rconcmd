@@ -6,16 +6,22 @@ rust:
   - stable
 script:
   # On regular test
-  - if [ -z "$TRAVIS_TAG" ]; cargo build --verbose --all; fi
-  - if [ -z "$TRAVIS_TAG" ]; cargo test --verbose --all; fi
+  - if [ -z "$TRAVIS_TAG" ]; then cargo build --verbose --all; fi
+  - if [ -z "$TRAVIS_TAG" ]; then cargo test --verbose --all; fi
   # On deploy
-  - if [ -n "$TRAVIS_TAG" ]; cargo test --release --verbose --all; fi
-  - if [ -n "$TRAVIS_TAG" ]; cargo build --release --verbose --all; fi
+  - if [ -n "$TRAVIS_TAG" ]; then cargo test --release --verbose --all; fi
+  - if [ -n "$TRAVIS_TAG" ]; then cargo build --release --verbose --all; fi
+before_deploy:
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install zip ; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then zip rconcmd-${TRAVIS_TAG}-${TARGET}.zip -j target/release/rconcmd.exe ; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then tar cvfz rconcmd-${TRAVIS_TAG}-${TARGET}.tar.gz target/release/rconcmd ; fi
 deploy:
   skip_cleanup: true
   provider: releases
   api_key: $GITHUB_OAUTH_TOKEN
-  file: target/release/rconcmd
+  file:
+    - rconcmd-${TRAVIS_TAG}-${TARGET}.zip
+    - rconcmd-${TRAVIS_TAG}-${TARGET}.tar.gz
   draft: true
   on:
     tags: true
