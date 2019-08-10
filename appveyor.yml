@@ -9,6 +9,6 @@ platform:
 environment:
   matrix:
     - TOOLCHAIN_VERSION: 14.0
-      RUST: 1.19.0
+      RUST: 1.36.0
 
 build_script: appveyor.bat
