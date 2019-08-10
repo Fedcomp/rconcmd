@@ -6,7 +6,7 @@ rust:
   - stable
 deploy:
   provider: releases
-  api_key: $GITHUB_OAUTH_TOKEN
+  github_token: $GITHUB_OAUTH_TOKEN
   file: target/release/rconcmd
   draft: true
   on:
