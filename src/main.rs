@@ -1,3 +1,5 @@
+#![feature(async_await)]
+
 use std::io::Error;
 use std::io;
 use std::io::{Write, BufRead};
@@ -7,7 +9,8 @@ use clap::{Arg, App};
 
 use rconcmd::srcds::rcon::Connection;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let matches = App::new("rconcmd")
                           .version("1.0")
                           .author("Fedcomp")
