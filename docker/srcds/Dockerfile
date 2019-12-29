@@ -1,4 +1,4 @@
-FROM ubuntu:19.04
+FROM ubuntu:20.04
 
 ARG SRCDS_DIR=/opt/srcds
 ARG STEAMCMD_DIR=/opt/steamcmd
